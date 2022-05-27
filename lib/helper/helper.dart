@@ -2,19 +2,16 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_countdown_timer/current_remaining_time.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
-import 'package:intl/intl.dart';
+import 'package:mockup_rick/controller/characters.dart';
 import 'package:mockup_rick/helper/hide.dart';
-import 'package:mockup_rick/model/get_character.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:recase/recase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-List<GetCharacters> listCharacters = [];
-List<GetCharacters> listSearchCharacters = [];
-List<GetCharacters> listFilterCharacters = [];
+
+var searchCharacter = CharacterPage();
 List<BoxShadow> elevation({required Color color, required int elevation}) {
   return [
     BoxShadow(color: color.withOpacity(0.6), offset: Offset(0.0, 4.0), blurRadius: 3.0 * elevation, spreadRadius: -1.0 * elevation),
@@ -786,3 +783,17 @@ extension StringExtension on String {
 
   }
 }
+
+getStatus(String status){
+  if(status == "Alive"){
+    return Colors.green;
+  }else if(status == "Dead"){
+    return Colors.red;
+  }else{
+    return Colors.grey;
+  }
+
+}
+
+
+

@@ -26,6 +26,7 @@ class _LaunchScreenState extends State<LaunchScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 70),
         decoration: const BoxDecoration(
           image: DecorationImage(
+            fit: BoxFit.fill,
             image: AssetImage("assets/images/Fondo imagen.png")
           )
         ),

@@ -1,5 +1,10 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:mockup_rick/controller/characters.dart';
 import 'package:mockup_rick/helper/helper.dart';
+import 'package:mockup_rick/helper/screens/character/index.dart';
+import 'package:mockup_rick/model/general_class.dart';
 import 'package:mockup_rick/model/get_character.dart';
 import 'package:number_paginator/number_paginator.dart';
 class Home extends StatefulWidget {
@@ -16,19 +21,21 @@ final ScrollController _scrollController =  ScrollController();
 TextEditingController searchController = TextEditingController();
 int selectedPageNumber = 0;
 int numberPages = 1;
-  getCharacter()async{
+
+String errorMessage = '';
+
+
+
+  getAllCharacter()async{
     try{
-      var js = await doGet('api/character');
-      print("res character: $js");
-      if(js["results"].isNotEmpty){
-          GetCharacters dataData = GetCharacters.fromJson(js);
-            listCharacters.add(dataData);
-            numberPages = dataData.info.pages;
-
-
-      }
+      errorMessage =  await  searchCharacter.getCharacter();
       if(mounted){
         setState(() {
+          if(listCharacters.isNotEmpty){
+            numberPages = listCharacters[0].info.pages;
+          }else{
+            toast("Error message:$errorMessage");
+          }
           progressCode = false;
           selectedPageNumber = 0;
         });
@@ -44,502 +51,348 @@ int numberPages = 1;
     }
 
   }
-  searchCharacter({String search = ''} )async{
-    // try{
-      var js = await doGet('api/character/?name=$search');
-      print("res search: $js");
-      if(js["results"].isNotEmpty){
-          GetCharacters dataData = GetCharacters.fromJson(js);
-          listSearchCharacters.add(dataData);
-          numberPages = dataData.info.pages;
-      }
+
+  searchAllCharacter({String search = ''} )async{
+    try{
+      errorMessage =  await  searchCharacter.searchCharacter(search: search);
       if(mounted){
         setState(() {
-          progressCode = false;
-          selectedPageNumber = 0;
-        });
-      }
-
-    // }catch(e){
-    //   if(mounted){
-    //     setState(() {
-    //       progressCode = false;
-    //     });
-    //   }
-    //   print("error subscriptions: $e");
-    // }
-
-  }
-  paginationCharacter({String pageNumber = ''} )async{
-    // try{
-    listCharacters.clear();
-      var js = await doGet('api/character/?page=$pageNumber');
-      print("res search: $js");
-      if(js["results"].isNotEmpty){
-          GetCharacters dataData = GetCharacters.fromJson(js);
-          if(searchController.text.isNotEmpty){
-            listSearchCharacters.add(dataData);
+          if(listCharacters.isNotEmpty){
+            numberPages = listCharacters[0].info.pages;
           }else{
-            listCharacters.add(dataData);
+            toast("Error message:$errorMessage");
           }
-
-          numberPages = dataData.info.pages;
-      }
-      if(mounted){
-        setState(() {
-          progressCode = false;
-        });
-      }
-
-    // }catch(e){
-    //   if(mounted){
-    //     setState(() {
-    //       progressCode = false;
-    //     });
-    //   }
-    //   print("error subscriptions: $e");
-    // }
-
-  }
-  filterCharacter({String filter = '',String value = ''} )async{
-    // try{
-      var js = await doGet('api/character/?$filter=$value');
-      print("res search: $js");
-      if(js["results"].isNotEmpty){
-          GetCharacters dataData = GetCharacters.fromJson(js);
-          listCharacters.add(dataData);
-          numberPages = dataData.info.pages;
-      }
-      if(mounted){
-        setState(() {
           progressCode = false;
           selectedPageNumber = 0;
         });
       }
 
-    // }catch(e){
-    //   if(mounted){
-    //     setState(() {
-    //       progressCode = false;
-    //     });
-    //   }
-    //   print("error subscriptions: $e");
-    // }
+    }catch(e){
+      if(mounted){
+        setState(() {
+          progressCode = false;
+        });
+      }
+      print("error subscriptions: $e");
+    }
 
   }
 
-  getAllCharacters(){
-     if(listCharacters.isNotEmpty){
-       return ListView(
-         controller: _scrollController,
-         scrollDirection: Axis.vertical,
-         shrinkWrap: true,
-         padding: bottomPadding(70),
-         children: listCharacters[0].results.map<Widget> ( (getCharacters) {
-           return      Container(
-             margin: EdgeInsets.only(left: 20,right: 20,bottom: 20),
-             width: appWidth(context),
-             child: Row(
-               children: [
-                 Stack(
-                   children: [
-                     Container(
-                       margin: EdgeInsets.only(top: 0),
-                       child: ClipRRect(
-                         borderRadius: BorderRadius.only(bottomLeft: Radius.circular(10),topLeft:  Radius.circular(10)),
-                         child: displayImage("${getCharacters.image}",radius: 0,height: 150),
-                       ),
-                     ),
-                     Positioned(
-                       right: 10,
-                       bottom: 10,
-                       child:   Container(
-                         padding: appPadding(10),
-                         child: Image.asset("assets/images/Vector.png",color: Colors.yellow,),
-                         decoration: BoxDecoration(
-                             color: Colors.grey[200],
-                             shape: BoxShape.circle
-                         ),
-                       ),
-                     )
-                   ],
-                 ),
-                 SizedBox(width: 0,),
-                 Container(
-                   width: 180,
-                   padding: EdgeInsets.only(top: 7,right: 5,left: 5),
-                   height: 150,
-                   decoration: BoxDecoration(
-                     border: Border(
-                       top: BorderSide(color: Colors.black),
-                       bottom: BorderSide(color: Colors.black),
-                       right: BorderSide(color: Colors.black,
-                       ),
-                     ),
-                   ),
-                   child: Column(
-                     crossAxisAlignment: CrossAxisAlignment.start,
-                     children: [
-                       Container(
-                         child: Row(
-                           children: [
-                             Container(
-                               child: Image.asset("assets/images/Ellipse 1.png"),
-                             ),
-                             SizedBox(width: 5,),
-                             Container(
-                               width: 150,
+  getPaginationCharacter({String pageNumber = ''} )async{
+    try{
+      errorMessage =  await  searchCharacter.paginationCharacter(pageNumber: pageNumber);
+      if(mounted){
+        setState(() {
+          if(listCharacters.isNotEmpty){
+            numberPages = listCharacters[0].info.pages;
+          }else{
+            toast("Error message:$errorMessage");
+          }
+          progressCode = false;
+          // selectedPageNumber = 0;
+        });
+      }
 
-                               child: sText("${getCharacters.status} - ${getCharacters.species}",maxLines: 1),
-                             )
-                           ],
-                         ),
-                       ),
-                       Container(
-                         child: sText("${getCharacters.name}",weight: FontWeight.bold,maxLines: 1),
-                       ),
-                       SizedBox(height: 10,),
-                       Container(
-                         child: sText("Last known location"),
-                       ),
-                       Container(
-                         child: sText("${getCharacters.location.name}",weight: FontWeight.bold,maxLines: 1),
-                       ),
-                       SizedBox(height: 10,),
-                       Container(
-                         child: sText("First seen in:"),
-                       ),
-                       Container(
-                         child: sText("Never Ricking Morty Morty Morty Morty",weight: FontWeight.bold,maxLines: 1),
-                       ),
-                     ],
-                   ),
-                 )
-               ],
-             ),
-           );
-         }).toList(),
-
-       );
-     }else if(listCharacters.isEmpty && progressCode){
-       return Container(height: appHeight(context)/2,child: Center(child: progress(),));
-     }else{
-       return Container(height: appHeight(context)/2,child: Center(child: sText("No Character was found"),));
-     }
+    }catch(e){
+      if(mounted){
+        setState(() {
+          progressCode = false;
+        });
+      }
+      print("error subscriptions: $e");
+    }
 
   }
+
+
+  getFilterSearchCharacter({String genderValue = '',String statusValue = ''} )async{
+    try{
+      errorMessage =  await  searchCharacter.filterSearchCharacter(search: searchController.text,genderValue: genderValue,statusValue: statusValue);
+      if(mounted){
+        setState(() {
+          if(listCharacters.isNotEmpty){
+            numberPages = listCharacters[0].info.pages;
+          }else{
+            toast("Error message:$errorMessage");
+          }
+          progressCode = false;
+          selectedPageNumber = 0;
+        });
+      }
+
+    }catch(e){
+      if(mounted){
+        setState(() {
+          progressCode = false;
+        });
+      }
+      print("error subscriptions: $e");
+    }
+
+}
+
 
   getSearchCharacters(){
-     if(listSearchCharacters.isNotEmpty){
-       return ListView(
-         controller: _scrollController,
-         scrollDirection: Axis.vertical,
-         shrinkWrap: true,
-         padding: bottomPadding(70),
-         children: listSearchCharacters[0].results.map<Widget> ( (getCharacters) {
-           return      Container(
-             margin: EdgeInsets.only(left: 20,right: 20,bottom: 20),
-             width: appWidth(context),
-             child: Row(
-               children: [
-                 Stack(
-                   children: [
-                     Container(
-                       margin: EdgeInsets.only(top: 0),
-                       child: ClipRRect(
-                         borderRadius: BorderRadius.only(bottomLeft: Radius.circular(10),topLeft:  Radius.circular(10)),
-                         child: displayImage("${getCharacters.image}",radius: 0,height: 150),
-                       ),
-                     ),
-                     Positioned(
-                       right: 10,
-                       bottom: 10,
-                       child:   Container(
-                         padding: appPadding(10),
-                         child: Image.asset("assets/images/Vector.png",color: Colors.yellow,),
-                         decoration: BoxDecoration(
-                             color: Colors.grey[200],
-                             shape: BoxShape.circle
-                         ),
-                       ),
-                     )
-                   ],
-                 ),
-                 SizedBox(width: 0,),
-                 Container(
-                   width: 180,
-                   padding: EdgeInsets.only(top: 7,right: 5,left: 5),
-                   height: 150,
-                   decoration: BoxDecoration(
-                     border: Border(
-                       top: BorderSide(color: Colors.black),
-                       bottom: BorderSide(color: Colors.black),
-                       right: BorderSide(color: Colors.black,
-                       ),
-                     ),
-                   ),
-                   child: Column(
-                     crossAxisAlignment: CrossAxisAlignment.start,
-                     children: [
-                       Container(
-                         child: Row(
-                           children: [
-                             Container(
-                               child: Image.asset("assets/images/Ellipse 1.png"),
-                             ),
-                             SizedBox(width: 5,),
-                             Container(
-                               width: 150,
-                               child: sText("${getCharacters.status} - ${getCharacters.species}",maxLines: 1),
-                             )
-                           ],
-                         ),
-                       ),
-                       Container(
-                         child: sText("${getCharacters.name}",weight: FontWeight.bold,maxLines: 1),
-                       ),
-                       SizedBox(height: 10,),
-                       Container(
-                         child: sText("Last known location"),
-                       ),
-                       Container(
-                         child: sText("${getCharacters.location.name}",weight: FontWeight.bold,maxLines: 1),
-                       ),
-                       SizedBox(height: 10,),
-                       Container(
-                         child: sText("First seen in:"),
-                       ),
-                       Container(
-                         child: sText("Never Ricking Morty Morty Morty Morty",weight: FontWeight.bold,maxLines: 1),
-                       ),
-                     ],
-                   ),
-                 )
-               ],
-             ),
-           );
-         }).toList(),
+    if(listCharacters.isNotEmpty){
+      return ListView(
+        controller: _scrollController,
+        scrollDirection: Axis.vertical,
+        shrinkWrap: true,
+        padding: bottomPadding(70),
+        children: listCharacters[0].results.map<Widget> ( (getCharacters) {
+          return      GestureDetector(
+            onTap: (){
+              goTo(context, CharacterScreen(getCharacter: getCharacters,));
+            },
+            child: Container(
+              margin: EdgeInsets.only(left: 20,right: 20,bottom: 20),
+              width: appWidth(context),
+              child: Row(
+                children: [
+                  Stack(
+                    children: [
+                      Container(
+                        margin: EdgeInsets.only(top: 0),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.only(bottomLeft: Radius.circular(10),topLeft:  Radius.circular(10)),
+                          child: displayImage("${getCharacters.image}",radius: 0,height: 150),
+                        ),
+                      ),
+                      Positioned(
+                        right: 10,
+                        bottom: 10,
+                        child:   Container(
+                          padding: appPadding(10),
+                          child: Image.asset("assets/images/Vector.png",color: Colors.yellow,),
+                          decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              shape: BoxShape.circle
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                  SizedBox(width: 0,),
+                  Expanded(
+                    child: Container(
+                      height: 148,
+                      padding: EdgeInsets.only(left: 5,top: 3,right: 5,bottom: 3),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(color: Colors.black),
+                          bottom: BorderSide(color: Colors.black),
+                          right: BorderSide(color: Colors.black,
+                          ),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // SizedBox(height: 5,),
+                          Row(
+                            children: [
+                              Container(
+                                padding: appPadding(5),
+                                decoration: BoxDecoration(
+                                  color: getStatus(getCharacters.status),
+                                  shape: BoxShape.circle,
 
-       );
-     }else if(listSearchCharacters.isEmpty && progressCode){
-       return Container(height: appHeight(context)/2,child: Center(child: progress(),));
-     }else{
-       return Container(height: appHeight(context)/2,child: Center(child: sText("No Character was found"),));
-     }
+                                ),
+
+                              ),
+                              SizedBox(width: 5,),
+                              Container(
+                                width: 150,
+                                child: sText("${getCharacters.status} - ${getCharacters.species}",maxLines: 1),
+                              )
+                            ],
+                          ),
+                          Container(
+                            child: sText("${getCharacters.name}",weight: FontWeight.bold,maxLines: 1),
+                          ),
+                          SizedBox(height: 10,),
+                          Container(
+                            child: sText("Last known location"),
+                          ),
+                          Container(
+                            child: sText("${getCharacters.location.name}",weight: FontWeight.bold,maxLines: 1),
+                          ),
+                          SizedBox(height: 10,),
+                          Container(
+                            child: sText("First seen in:"),
+                          ),
+                          Container(
+                            child: sText("Never Ricking Morty Morty Morty Morty",weight: FontWeight.bold,maxLines: 1),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+
+      );
+    }else if(listCharacters.isEmpty && progressCode){
+      return Container(height: appHeight(context)/2,child: Center(child: progress(),));
+    }else{
+      return Container(height: appHeight(context)/2,child: Center(child: sText("No Character was found"),));
+    }
 
 
   }
 
 
 
-filterPopUpMenu(){
-  return  PopupMenuButton(onSelected: (result) {
 
-  },
-    // color:  Color(0xFF253341),
+void _settingModalBottomSheet(context){
+  showModalBottomSheet(
+      isDismissible: true,
+      context: context,
+      isScrollControlled: true,
 
-    icon: Image.asset("assets/images/bars.png"),
+      builder: (BuildContext context){
+        return Container(
+          height: 400,
+          child: StatefulBuilder(
+            builder: (BuildContext context,StateSetter stateSetter){
+              return Container(
+                child: Column(
+                  children: [
+                    Container(
+                      padding: appPadding(10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            child: sText("Filter by (Status/Gender)",color: Colors.black,family: "Brand-Bold",align: TextAlign.center,size: 20,weight: FontWeight.bold),
+                          )
 
-    // add this line
-    itemBuilder: (_) => <PopupMenuItem<String>>[
-      PopupMenuItem<String>(
-        child: Container(
-            width: 100,
-            // height: 30,
-            child: Row(
-              children: [
-                sText("All",),
-                filter == 'All' ? Icon(Icons.check,color: Colors.green,) : Container()
-              ],
-            )
-        )
-        , value: 'all',
-        onTap: ()async{
-         setState(() {
-           listCharacters.clear();
-           progressCode = true;
-           filter = 'All';
-           print("selectedPageNumber:$selectedPageNumber");
-         });
-         await  getCharacter();
-        },
+                        ],
+                      ),
+                    ),
+                    Divider(color: Colors.grey,),
+                    Expanded(
+                      child:ListView.builder(
+                          itemCount: listFilterName.length,
+                          itemBuilder: (BuildContext context, int index){
+                            return  GestureDetector(
+                              onTap: ()async{
+                                await searchCharacter.IsChecked(index);
+                                stateSetter(() {
 
-      ),
-      PopupMenuItem<String>(
-        child: Container(
-            width: 100,
-            // height: 30,
-            child: Row(
-              children: [
-                sText("Alive",),
-                filter == 'Alive' ? Icon(Icons.check,color: Colors.green,) : Container()
+                                });
+                              },
+                              child: Column(
+                                children: [
+                                  Container(
+                                    padding:EdgeInsets.symmetric(horizontal: 20,vertical: 10),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Container(
+                                            child: sText("${listFilterName[index].name}",color: Colors.black,family: "Brand-Bold",align: TextAlign.left,size: 20),
+                                          ),
+                                        ),
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                                color:  appMainDarkGrey,
+                                                width: 2.3),
+                                          ),
+                                          width: 24,
+                                          height: 24,
+                                          child: Theme(
+                                            data: ThemeData(unselectedWidgetColor: Colors.white),
+                                            child: Checkbox(
+                                              checkColor: appMainDarkGrey,
+                                              activeColor: Colors.transparent,
+                                              value: selectedFilterName.contains(listFilterName[index]) ? true : false,
+                                              tristate: false,
+                                              onChanged: (bool? isChecked) async{
+                                                print("hi");
+                                                await searchCharacter.IsChecked(index);
+                                                stateSetter(() {
 
-              ],
-            )
-        )
-        , value: 'alive',
-        onTap: ()async{
-         setState(() {
-           listCharacters.clear();
-           progressCode = true;
-           filter = 'Alive';
-         });
-         await filterCharacter(filter: 'status',value: 'alive');
-        },
+                                                });
 
-      ),
-      PopupMenuItem<String>(
-        child: Container(
-            width: 100,
-            // height: 30,
-            child: Row(
-              children: [
-                sText("Dead",),
-                filter == 'Dead' ? Icon(Icons.check,color: Colors.green,) : Container()
+                                              },
+                                            ),
+                                          ),
+                                        ),
 
-              ],
-            )
-        )
-        , value: 'dead',
-        onTap: ()async{
-         setState(() {
-           listCharacters.clear();
-           progressCode = true;
-           filter = 'Dead';
-         });
-         await filterCharacter(filter: 'status',value: 'dead');
-        },
+                                      ],
+                                    ),
+                                  ),
+                                  Divider(color: Colors.grey,),
+                                ],
+                              ),
+                            );
+                          }),
+                    ),
+                    SizedBox(height: 10,),
+                    GestureDetector(
+                      onTap: ()async{
+                        String g_val = '';
+                        String s_val = '';
+                        setState(() {
+                          reset();
+                        });
+                        if(selectedFilterName.isNotEmpty){
+                          for(int i = 0; i < selectedFilterName.length; i++){
+                            if(selectedFilterName[i].id == "status"){
+                              s_val = selectedFilterName[i].name.toLowerCase();
+                            }else{
+                              g_val =  selectedFilterName[i].name.toLowerCase();
+                            }
+                          }
+                          Navigator.pop(context);
+                          await getFilterSearchCharacter(genderValue: g_val,statusValue: s_val);
+                        }else{
+                          getAllCharacter();
+                        }
+                      },
+                      child: Container(
+                        padding: appPadding(20),
+                        color: appMainDarkGrey,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              child: Icon(Icons.search,color:Colors.white,size: 30,),
+                            ),
+                            SizedBox(width: 10,),
+                            Container(
+                              child: sText("Filter",color: Colors.white,family: "Brand-Bold",align: TextAlign.center,size: 20,weight: FontWeight.bold),
+                            )                        ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
 
-      ),
-      PopupMenuItem<String>(
-        child: Container(
-            width: 100,
-            // height: 30,
-            padding: appPadding(5),
-            child: Row(
-              children: [
-                sText("Unknown",),
-                filter == 'unknown_s' ? Icon(Icons.check,color: Colors.green,) : Container()
-              ],
-            )
-        )
-        , value: 'unknown_s',
-        onTap: ()async{
-         setState(() {
-           listCharacters.clear();
-           progressCode = true;
-           filter = 'unknown_s';
-         });
-         await filterCharacter(filter: 'status',value: 'unknown');
-        },
-
-      ),
-        PopupMenuItem<String>(
-
-          child: Container(
-              width: 100,
-              // height: 30,
-              child: Row(
-                children: [
-                  sText("Female",),
-                  filter == 'Female' ? Icon(Icons.check,color: Colors.green,) : Container()
-
-                ],
-              )
-          )
-          , value: 'female',
-          onTap: ()async{
-            setState(() {
-              listCharacters.clear();
-              progressCode = true;
-              filter = 'Female';
-            });
-            await filterCharacter(filter: 'gender',value: 'female');
-          },
-
-        ),
-        PopupMenuItem<String>(
-
-          child: Container(
-              width: 100,
-              // height: 30,
-              child: Row(
-                children: [
-                  sText("Male",),
-                  filter == 'Male' ? Icon(Icons.check,color: Colors.green,) : Container()
-
-                ],
-              )
-          )
-          , value: 'male',
-          onTap: ()async{
-            setState(() {
-              listCharacters.clear();
-              progressCode = true;
-              filter = 'Male';
-            });
-            await filterCharacter(filter: 'gender',value: 'male');
-          },
-
-        ),
-        PopupMenuItem<String>(
-
-          child: Container(
-              width: 120,
-              // height: 30,
-              child: Row(
-                children: [
-                  sText("Genderless",),
-                  filter == 'Genderless' ? Icon(Icons.check,color: Colors.green,) : Container()
-
-                ],
-              )
-          )
-          , value: 'genderless',
-          onTap: ()async{
-            setState(() {
-              listCharacters.clear();
-              progressCode = true;
-              filter = 'Genderless';
-            });
-            await filterCharacter(filter: 'gender',value: 'genderless');
-          },
-
-        ),
-        PopupMenuItem<String>(
-
-          child: Container(
-              width: 100,
-              // height: 30,
-              child: Row(
-                children: [
-                  sText("Unknown",),
-                  filter == 'unknown_g' ? Icon(Icons.check,color: Colors.green,) : Container()
-
-                ],
-              )
-          )
-          , value: 'unknown_g',
-          onTap: ()async{
-            setState(() {
-              listCharacters.clear();
-              progressCode = true;
-              filter = 'unknown_g';
-            });
-            await filterCharacter(filter: 'gender',value: 'unknown');
-          },
-
-        ),
-
-
-    ],
+          ),
+        );
+      }
   );
+}
+
+reset(){
+  listCharacters.clear();
+
+  progressCode = true;
+  // searchController.clear();
 }
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    getCharacter();
+    getAllCharacter();
   }
   @override
   Widget build(BuildContext context) {
@@ -554,7 +407,9 @@ filterPopUpMenu(){
                   height: 280,
                   width: appWidth(context),
                   decoration: const BoxDecoration(
+
                       image: DecorationImage(
+                        fit: BoxFit.fill,
                           image: AssetImage("assets/images/Fondo imagen home.png")
                       )
                   ),
@@ -570,25 +425,26 @@ filterPopUpMenu(){
                         color: appMainDarkGrey,
                         child: Row(
                           children: [
-                            SizedBox(width: 20,),
+                            SizedBox(width: 15,),
                             Expanded(
                               child: TextFormField(
                                 textInputAction: TextInputAction.search,
                                 controller: searchController,
                                 onFieldSubmitted: (String value){
-                                  filter = '';
-                                  setState(() {
-                                    progressCode = true;
-                                    listSearchCharacters.clear();
-                                  });
                                   if(value.isNotEmpty){
-                                    searchCharacter(search: value);
+                                    setState(() {
+                                      selectedFilterName.clear();
+                                      progressCode = true;
+                                      listCharacters.clear();
+                                    });
+                                    searchAllCharacter(search: value);
                                   }else{
                                     setState(() {
-                                      searchController.clear();
+                                      listCharacters.clear();
                                       progressCode = true;
+                                      searchController.clear();
                                     });
-                                    getCharacter();
+                                    getAllCharacter();
                                   }
                                 },
 
@@ -604,10 +460,15 @@ filterPopUpMenu(){
                               ),
                             ),
                             SizedBox(width: 20,),
-                            Container(
-                              child: filterPopUpMenu(),
+                            GestureDetector(
+                              onTap: (){
+                                _settingModalBottomSheet(context);
+                              },
+                              child: Container(
+                                margin: rightPadding(20),
+                                child:  Image.asset("assets/images/bars.png"),
+                              ),
                             ),
-                            SizedBox(width: 20,),
                           ],
                         ),
                       )
@@ -615,7 +476,7 @@ filterPopUpMenu(){
                   ),
                 ),
                 SizedBox(height: 10,),
-                listCharacters.isNotEmpty || listSearchCharacters.isNotEmpty ?
+                listCharacters.isNotEmpty  ?
                 Container(
                   margin: EdgeInsets.symmetric(horizontal: 10),
                   child: Column(
@@ -625,12 +486,11 @@ filterPopUpMenu(){
                         onPageChange: (int index) {
                           setState(() {
                             listCharacters.clear();
-                            listSearchCharacters.clear();
                             selectedPageNumber = index;
                             progressCode = true;
                           });
 
-                          paginationCharacter(pageNumber:"${ selectedPageNumber + 1}");
+                          getPaginationCharacter(pageNumber:"${ selectedPageNumber + 1}");
                         },
                         // initially selected index
                         initialPage: selectedPageNumber,
@@ -649,10 +509,8 @@ filterPopUpMenu(){
                   ),
                 ) :Container(),
 
+                    getSearchCharacters()
 
-                searchController.text.isNotEmpty ?
-                    getSearchCharacters() :
-                    getAllCharacters()
 
               ],
             ),

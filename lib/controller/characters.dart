@@ -8,24 +8,25 @@ import 'package:mockup_rick/model/get_multiple_characters.dart';
 List<GetCharacters> listCharacters = [];
 List<GetEpisodes> listGetEpisodes = [];
 List<GetMultipleCharacters> listCharactersInterest = [];
+int selectedPageNumber = 0;
 class CharacterPage{
 
    searchCharacter({String search = ''} )async{
-  try{
-    listCharacters.clear();
-    var js = await doGet('api/character/?name=$search');
-    print("res search: $js");
-    if(js["results"].isNotEmpty){
-      GetCharacters dataData = GetCharacters.fromJson(js);
-      listCharacters.add(dataData);
-      return "";
-    }
-    return "The results is empty";
-  }catch(e){
-    print("error subscriptions: $e");
-    return  e.toString();
+    try{
+      listCharacters.clear();
+      var js = await doGet('api/character/?name=$search');
+      print("res search: $js");
+      if(js["results"].isNotEmpty){
+        GetCharacters dataData = GetCharacters.fromJson(js);
+        listCharacters.add(dataData);
+        return "";
+      }
+      return "The results is empty";
+    }catch(e){
+      print("error subscriptions: $e");
+      return  e.toString();
 
-  }
+    }
 
 }
 
@@ -47,14 +48,38 @@ class CharacterPage{
 
    }
 
-   paginationCharacter({String pageNumber = ''} )async{
+   paginationCharacter({String pageNumber = '',String genderValue = '',String statusValue = '',String search = ''})async{
      try{
      listCharacters.clear();
-     var js = await doGet('api/character/?page=$pageNumber');
+     var js = await doGet('api/character/?page=${int.parse(pageNumber) + 1}&name=$search&status=$statusValue&gender=$genderValue');
+     print("res search: $js");
+     if(js.containsKey("error")){
+       selectedPageNumber--;
+      await  paginationCharacter(pageNumber: "1",genderValue: genderValue,statusValue: statusValue,search: search);
+     }else{
+       if(js["results"].isNotEmpty){
+         GetCharacters dataData = GetCharacters.fromJson(js);
+         listCharacters.add(dataData);
+         return "";
+       }
+     }
+
+     return "The results is empty";
+     }catch(e){
+       print("error subscriptions: $e");
+       return "$e";
+     }
+
+   }
+   onLoadingPaginationCharacter({String pageNumber = '',String genderValue = '',String statusValue = '',String search = ''})async{
+     try{
+       var js = await doGet('api/character/?page=$pageNumber&name=$search&status=$statusValue&gender=$genderValue');
      print("res search: $js");
      if(js["results"].isNotEmpty){
        GetCharacters dataData = GetCharacters.fromJson(js);
-       listCharacters.add(dataData);
+       for(int i = 0; i < dataData.results.length; i++){
+         listCharacters[0].results.add(dataData.results[i]);
+       }
        return "";
      }
      return "The results is empty";

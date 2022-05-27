@@ -11,6 +11,7 @@ import 'package:recase/recase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
+
 var searchCharacter = CharacterPage();
 List<BoxShadow> elevation({required Color color, required int elevation}) {
   return [
@@ -542,7 +543,8 @@ Future<dynamic> getPref(key, {type = 'string'}) async {
   switch (type) {
     case 'string':
       return sp.getString(key);
-      break;
+    case 'int':
+      return sp.getInt(key);
     case 'bool':
       return sp.getBool(key);
       break;

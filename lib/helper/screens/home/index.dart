@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mockup_rick/controller/characters.dart';
 import 'package:mockup_rick/helper/helper.dart';
@@ -7,6 +8,7 @@ import 'package:mockup_rick/helper/screens/character/index.dart';
 import 'package:mockup_rick/model/general_class.dart';
 import 'package:mockup_rick/model/get_character.dart';
 import 'package:number_paginator/number_paginator.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
 
@@ -17,14 +19,28 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
 bool progressCode = true;
 String filter = '';
-final ScrollController _scrollController =  ScrollController();
+String g_val = '';
+String s_val = '';
+// final ScrollController _scrollController =  ScrollController();
 TextEditingController searchController = TextEditingController();
-int selectedPageNumber = 0;
-int numberPages = 1;
 
+int numberPages = 1;
 String errorMessage = '';
 
+RefreshController _refreshController =  RefreshController(initialRefresh: false);
+void _onLoading() async{
+  setState(() {
+    // selectedPageNumber++;
+  });
+  await setPref("selectedPageNumber", selectedPageNumber,type: 'int');
+  await searchCharacter.onLoadingPaginationCharacter(pageNumber: "$selectedPageNumber",genderValue: g_val,statusValue: s_val,search: searchController.text);
+  if(mounted){
+    setState(() {
 
+    });
+  }
+  _refreshController.loadComplete();
+}
 
   getAllCharacter()async{
     try{
@@ -39,6 +55,9 @@ String errorMessage = '';
           progressCode = false;
           selectedPageNumber = 0;
         });
+        await setPref("selectedPageNumber", selectedPageNumber,type: 'int');
+        await setPref("search", '',type: 'string');
+
       }
 
     }catch(e){
@@ -51,7 +70,6 @@ String errorMessage = '';
     }
 
   }
-
   searchAllCharacter({String search = ''} )async{
     try{
       errorMessage =  await  searchCharacter.searchCharacter(search: search);
@@ -64,7 +82,10 @@ String errorMessage = '';
           }
           progressCode = false;
           selectedPageNumber = 0;
+
         });
+        await setPref("selectedPageNumber", selectedPageNumber,type: 'int');
+        await setPref("search", search,type: 'string');
       }
 
     }catch(e){
@@ -77,10 +98,9 @@ String errorMessage = '';
     }
 
   }
-
   getPaginationCharacter({String pageNumber = ''} )async{
     try{
-      errorMessage =  await  searchCharacter.paginationCharacter(pageNumber: pageNumber);
+      errorMessage =  await  searchCharacter.paginationCharacter(pageNumber: pageNumber,genderValue: g_val,statusValue: s_val,search: searchController.text);
       if(mounted){
         setState(() {
           if(listCharacters.isNotEmpty){
@@ -103,8 +123,6 @@ String errorMessage = '';
     }
 
   }
-
-
   getFilterSearchCharacter({String genderValue = '',String statusValue = ''} )async{
     try{
       errorMessage =  await  searchCharacter.filterSearchCharacter(search: searchController.text,genderValue: genderValue,statusValue: statusValue);
@@ -118,6 +136,7 @@ String errorMessage = '';
           progressCode = false;
           selectedPageNumber = 0;
         });
+        await setPref("selectedPageNumber", selectedPageNumber,type: 'int');
       }
 
     }catch(e){
@@ -131,13 +150,12 @@ String errorMessage = '';
 
 }
 
-
-  getSearchCharacters(){
+  getCharactersWidget(){
     if(listCharacters.isNotEmpty){
       return ListView(
-        controller: _scrollController,
         scrollDirection: Axis.vertical,
         shrinkWrap: true,
+        physics: ClampingScrollPhysics(),
         padding: bottomPadding(70),
         children: listCharacters[0].results.map<Widget> ( (getCharacters) {
           return      GestureDetector(
@@ -235,7 +253,7 @@ String errorMessage = '';
           );
         }).toList(),
 
-      );
+      )  ;
     }else if(listCharacters.isEmpty && progressCode){
       return Container(height: appHeight(context)/2,child: Center(child: progress(),));
     }else{
@@ -245,10 +263,15 @@ String errorMessage = '';
 
   }
 
-
-
-
-void _settingModalBottomSheet(context){
+void _settingModalBottomSheet(context, List <ListNames> filterData){
+  //
+  // if(filterData.contains(listFilterName[0].name)){
+  //   print("filterData::${filterData[0].name}");
+  //   print("listFilterName::${listFilterName[0].name}");
+  // }else{
+  //   print("hmm::${filterData[0].name}");
+  //   print("hmm1::${listFilterName[0].name}");
+  // }
   showModalBottomSheet(
       isDismissible: true,
       context: context,
@@ -310,7 +333,7 @@ void _settingModalBottomSheet(context){
                                             child: Checkbox(
                                               checkColor: appMainDarkGrey,
                                               activeColor: Colors.transparent,
-                                              value: selectedFilterName.contains(listFilterName[index]) ? true : false,
+                                              value: filterData.contains(listFilterName[index]) ? true : false,
                                               tristate: false,
                                               onChanged: (bool? isChecked) async{
                                                 print("hi");
@@ -336,11 +359,10 @@ void _settingModalBottomSheet(context){
                     SizedBox(height: 10,),
                     GestureDetector(
                       onTap: ()async{
-                        String g_val = '';
-                        String s_val = '';
                         setState(() {
                           reset();
                         });
+                        Navigator.pop(context);
                         if(selectedFilterName.isNotEmpty){
                           for(int i = 0; i < selectedFilterName.length; i++){
                             if(selectedFilterName[i].id == "status"){
@@ -349,7 +371,8 @@ void _settingModalBottomSheet(context){
                               g_val =  selectedFilterName[i].name.toLowerCase();
                             }
                           }
-                          Navigator.pop(context);
+                          await setPref("g_val", g_val,type: 'string');
+                          await setPref("s_val", s_val,type: 'string');
                           await getFilterSearchCharacter(genderValue: g_val,statusValue: s_val);
                         }else{
                           getAllCharacter();
@@ -382,17 +405,53 @@ void _settingModalBottomSheet(context){
   );
 }
 
+initialCall()async{
+  var p_number = await getPref("selectedPageNumber",type: 'int');
+  var gender_val = await getPref("g_val",type: 'string');
+  var status_val = await getPref("s_val",type: 'string');
+  var search_val = await getPref("search",type: 'string');
+  p_number != null ? selectedPageNumber = p_number : selectedPageNumber = 0;
+  gender_val != null ? g_val = gender_val : g_val = '';
+  status_val != null ? s_val = status_val : s_val = '';
+  search_val != null ? search_val = search_val : search_val = '';
+  print("s_val:${properCase(s_val)}");
+  print("g_val:${properCase(g_val)}");
+  print("p_number:$p_number");
+  print("selectedPageNumber:$selectedPageNumber");
+  ListNames newStatusListNames = ListNames(name: "${s_val.isNotEmpty ? properCase(s_val.trim()) : s_val}",id: "status");
+  ListNames newGenderListNames = ListNames(name: "${g_val.isNotEmpty ? properCase(g_val.trim()) : g_val}",id: "gender");
+  selectedFilterName.add(newStatusListNames);
+  selectedFilterName.add(newGenderListNames);
+  for(int i =0; i < selectedFilterName.length; i++){
+    for(int t =0; t < listFilterName.length; t++){
+      if(selectedFilterName[i].name == listFilterName[t].name){
+        selectedFilterName.removeAt(i);
+        selectedFilterName.add(listFilterName[t]);
+      }
+    }
+
+  }
+  searchController.text = search_val;
+  setState(() {
+  print("newStatusListNames:${newStatusListNames.id}");
+  print("newGenderListNames:${newGenderListNames.id}");
+  });
+  if(selectedPageNumber == 0 && selectedFilterName.isEmpty){
+    await getAllCharacter();
+  }else{
+    await getPaginationCharacter(pageNumber: "${selectedPageNumber}");
+  }
+}
+
 reset(){
   listCharacters.clear();
-
   progressCode = true;
-  // searchController.clear();
 }
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    getAllCharacter();
+    initialCall();
   }
   @override
   Widget build(BuildContext context) {
@@ -400,120 +459,151 @@ reset(){
       body: Column(
         children: [
           Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                Container(
-                  height: 280,
-                  width: appWidth(context),
-                  decoration: const BoxDecoration(
-
-                      image: DecorationImage(
+            child:SmartRefresher(
+      reverse: false,
+          physics: ClampingScrollPhysics(),
+          enablePullDown: false,
+          enablePullUp: true,
+          footer: CustomFooter(
+            builder: (BuildContext context,LoadStatus? mode){
+              Widget body ;
+              if(mode==LoadStatus.idle){
+                body =  Text("No more Data");
+              }
+              else if(mode==LoadStatus.loading){
+                body =  CupertinoActivityIndicator();
+              }
+              else if(mode == LoadStatus.failed){
+                body = Text("Load Failed!Click retry!");
+              }
+              else if(mode == LoadStatus.canLoading){
+                body = Text("release to load more");
+              }
+              else{
+                body = Text("No more Data");
+              }
+              return Container(
+                height: 55.0,
+                child: Center(child:body),
+              );
+            },
+          ),
+          controller: _refreshController,
+          onLoading: _onLoading,
+          child :ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              Container(
+                height: 280,
+                width: appWidth(context),
+                decoration: const BoxDecoration(
+                    image: DecorationImage(
                         fit: BoxFit.fill,
-                          image: AssetImage("assets/images/Fondo imagen home.png")
-                      )
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        child: Image.asset("assets/images/Rick-And-Morty-Logo 1.png"),
-                      ),
-                      Container(
-                        width: appWidth(context),
-                        height: 70,
-                        color: appMainDarkGrey,
-                        child: Row(
-                          children: [
-                            SizedBox(width: 15,),
-                            Expanded(
-                              child: TextFormField(
-                                textInputAction: TextInputAction.search,
-                                controller: searchController,
-                                onFieldSubmitted: (String value){
-                                  if(value.isNotEmpty){
-                                    setState(() {
-                                      selectedFilterName.clear();
-                                      progressCode = true;
-                                      listCharacters.clear();
-                                    });
-                                    searchAllCharacter(search: value);
-                                  }else{
-                                    setState(() {
-                                      listCharacters.clear();
-                                      progressCode = true;
-                                      searchController.clear();
-                                    });
-                                    getAllCharacter();
-                                  }
-                                },
+                        image: AssetImage("assets/images/Fondo imagen home.png")
+                    )
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      child: Image.asset("assets/images/Rick-And-Morty-Logo 1.png"),
+                    ),
+                    Container(
+                      width: appWidth(context),
+                      height: 70,
+                      color: appMainDarkGrey,
+                      child: Row(
+                        children: [
+                          SizedBox(width: 15,),
+                          Expanded(
+                            child: TextFormField(
+                              textInputAction: TextInputAction.search,
+                              controller: searchController,
+                              onFieldSubmitted: (String value){
+                                if(value.isNotEmpty){
+                                  setState(() {
+                                    selectedFilterName.clear();
+                                    progressCode = true;
+                                    listCharacters.clear();
+                                  });
+                                  searchAllCharacter(search: value);
+                                }else{
+                                  setState(() {
+                                    listCharacters.clear();
+                                    progressCode = true;
+                                    searchController.clear();
+                                  });
+                                  getAllCharacter();
+                                }
+                              },
 
-                                style: appStyle(col: Colors.white),
-                                decoration: textDecorNoBorder(
-                                 hint: "Search here",
+                              style: appStyle(col: Colors.white),
+                              decoration: textDecorNoBorder(
+                                  hint: "Search here",
                                   hintColor: Colors.white,
                                   fill: appMainDarkGrey,
 
 
                                   prefixIcon: Image.asset("assets/images/search.png")
-                                ),
                               ),
                             ),
-                            SizedBox(width: 20,),
-                            GestureDetector(
-                              onTap: (){
-                                _settingModalBottomSheet(context);
-                              },
-                              child: Container(
-                                margin: rightPadding(20),
-                                child:  Image.asset("assets/images/bars.png"),
-                              ),
+                          ),
+                          SizedBox(width: 20,),
+                          GestureDetector(
+                            onTap: (){
+                              _settingModalBottomSheet(context,selectedFilterName);
+                            },
+                            child: Container(
+                              margin: rightPadding(20),
+                              child:  Image.asset("assets/images/bars.png"),
                             ),
-                          ],
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-                SizedBox(height: 10,),
-                listCharacters.isNotEmpty  ?
-                Container(
-                  margin: EdgeInsets.symmetric(horizontal: 10),
-                  child: Column(
-                    children: [
-                      NumberPaginator(
-                        numberPages: numberPages,
-                        onPageChange: (int index) {
-                          setState(() {
-                            listCharacters.clear();
-                            selectedPageNumber = index;
-                            progressCode = true;
-                          });
-
-                          getPaginationCharacter(pageNumber:"${ selectedPageNumber + 1}");
-                        },
-                        // initially selected index
-                        initialPage: selectedPageNumber,
-                        // default height is 48
-                        height: 50,
-                        buttonShape: BeveledRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        buttonSelectedForegroundColor: Colors.yellow,
-                        buttonUnselectedForegroundColor: Colors.white,
-                        buttonUnselectedBackgroundColor: Colors.grey,
-                        buttonSelectedBackgroundColor: Colors.blueGrey,
+                          ),
+                        ],
                       ),
-                      SizedBox(height: 10,),
-                    ],
-                  ),
-                ) :Container(),
+                    )
+                  ],
+                ),
+              ),
+              SizedBox(height: 10,),
+              listCharacters.isNotEmpty  ?
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: 10),
+                child: Column(
+                  children: [
+                    NumberPaginator(
+                      numberPages: numberPages,
+                      onPageChange: (int index) async{
+                        setState(() {
+                          print("index:$index");
+                          listCharacters.clear();
+                          selectedPageNumber = index;
+                          progressCode = true;
+                        });
+                        await setPref("selectedPageNumber", selectedPageNumber,type: 'int');
+                        // selectedPageNumber++;
 
-                    getSearchCharacters()
-
-
-              ],
-            ),
+                        getPaginationCharacter(pageNumber:"${ selectedPageNumber}");
+                      },
+                      // initially selected index
+                      initialPage: selectedPageNumber,
+                      // default height is 48
+                      height: 50,
+                      buttonShape: BeveledRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      buttonSelectedForegroundColor: Colors.yellow,
+                      buttonUnselectedForegroundColor: Colors.white,
+                      buttonUnselectedBackgroundColor: Colors.grey,
+                      buttonSelectedBackgroundColor: Colors.blueGrey,
+                    ),
+                    SizedBox(height: 10,),
+                  ],
+                ),
+              ) :Container(),
+              getCharactersWidget()
+            ],
+          ),
+      ),
           ),
           Container(
             width: double.infinity,

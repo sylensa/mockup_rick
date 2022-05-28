@@ -57,6 +57,8 @@ void _onLoading() async{
         });
         await setPref("selectedPageNumber", selectedPageNumber,type: 'int');
         await setPref("search", '',type: 'string');
+        await setPref("g_val", g_val,type: 'string');
+        await setPref("s_val", s_val,type: 'string');
 
       }
 
@@ -164,22 +166,25 @@ void _onLoading() async{
             },
             child: Container(
               margin: EdgeInsets.only(left: 20,right: 20,bottom: 20),
-              width: appWidth(context),
-              child: Row(
+              decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black),
+                  borderRadius: BorderRadius.circular(10)
+              ),
+              // width: appWidth(context),
+              child:  Row(
                 children: [
                   Stack(
                     children: [
                       Container(
-                        margin: EdgeInsets.only(top: 0),
                         child: ClipRRect(
                           borderRadius: BorderRadius.only(bottomLeft: Radius.circular(10),topLeft:  Radius.circular(10)),
                           child: displayImage("${getCharacters.image}",radius: 0,height: 150),
                         ),
                       ),
                       Positioned(
-                        right: 10,
                         bottom: 10,
-                        child:   Container(
+                        right: 10,
+                        child: Container(
                           padding: appPadding(10),
                           child: Image.asset("assets/images/Vector.png",color: Colors.yellow,),
                           decoration: BoxDecoration(
@@ -190,63 +195,61 @@ void _onLoading() async{
                       )
                     ],
                   ),
-                  SizedBox(width: 0,),
-                  Expanded(
-                    child: Container(
-                      height: 148,
-                      padding: EdgeInsets.only(left: 5,top: 3,right: 5,bottom: 3),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          top: BorderSide(color: Colors.black),
-                          bottom: BorderSide(color: Colors.black),
-                          right: BorderSide(color: Colors.black,
-                          ),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // SizedBox(height: 5,),
-                          Row(
-                            children: [
-                              Container(
-                                padding: appPadding(5),
-                                decoration: BoxDecoration(
-                                  color: getStatus(getCharacters.status),
-                                  shape: BoxShape.circle,
+                  SizedBox(width: 10,),
+                  Container(
+                    height: 150,
+                    // padding: EdgeInsets.only(left: 160),
 
-                                ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // SizedBox(height: 5,),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: appPadding(5),
+                              decoration: BoxDecoration(
+                                color: getStatus(getCharacters.status),
+                                shape: BoxShape.circle,
 
                               ),
-                              SizedBox(width: 5,),
-                              Container(
-                                width: 150,
-                                child: sText("${getCharacters.status} - ${getCharacters.species}",maxLines: 1),
-                              )
-                            ],
-                          ),
-                          Container(
-                            child: sText("${getCharacters.name}",weight: FontWeight.bold,maxLines: 1),
-                          ),
-                          SizedBox(height: 10,),
-                          Container(
-                            child: sText("Last known location"),
-                          ),
-                          Container(
-                            child: sText("${getCharacters.location.name}",weight: FontWeight.bold,maxLines: 1),
-                          ),
-                          SizedBox(height: 10,),
-                          Container(
-                            child: sText("First seen in:"),
-                          ),
-                          Container(
-                            child: sText("Never Ricking Morty Morty Morty Morty",weight: FontWeight.bold,maxLines: 1),
-                          ),
-                        ],
-                      ),
+
+                            ),
+                            SizedBox(width: 5,),
+                            Container(
+                              width: 155,
+                              child: sText("${getCharacters.status} - ${getCharacters.species}",maxLines: 1,align: TextAlign.start),
+                            )
+                          ],
+                        ),
+                        Container(
+                          width: 170,
+                          child: sText("${getCharacters.name}",weight: FontWeight.bold,maxLines: 1,align: TextAlign.start),
+                        ),
+                        SizedBox(height: 10,),
+                        Container(
+                          width: 170,
+                          child: sText("Last known location",align: TextAlign.start),
+                        ),
+                        Container(
+                          width: 170,
+                          child: sText("${getCharacters.location.name}",weight: FontWeight.bold,maxLines: 1,align: TextAlign.start),
+                        ),
+                        SizedBox(height: 10,),
+                        Container(
+                          width: 170,
+                          child: sText("First seen in:",align: TextAlign.start),
+                        ),
+                        Container(
+                          width: 170,
+                          child: sText("${getCharacters.origin.name}",weight: FontWeight.bold,maxLines: 1,align: TextAlign.start),
+                        ),
+                      ],
                     ),
-                  )
+                  ),
+
                 ],
               ),
             ),
@@ -530,8 +533,11 @@ reset(){
                                 }else{
                                   setState(() {
                                     listCharacters.clear();
+                                    selectedFilterName.clear();
                                     progressCode = true;
                                     searchController.clear();
+                                    s_val = '';
+                                    g_val = '';
                                   });
                                   getAllCharacter();
                                 }
